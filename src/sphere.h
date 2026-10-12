@@ -1,14 +1,17 @@
 #pragma once
 
 #include "hittable.h"
+#include "material.h"
 #include "vec3.h"
 
 #include <cmath>
+#include <memory>
+#include <utility>
 
 class sphere : public hittable {
 public:
-    sphere(const point3& center_, double radius_)
-        : center(center_), radius(std::fmax(0, radius_)) {}
+    sphere(const point3& center_, double radius_, std::shared_ptr<material> mat_)
+        : center(center_), radius(std::fmax(0, radius_)), mat(std::move(mat_)) {}
 
     // Derived from quadratic formula
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
@@ -35,6 +38,7 @@ public:
         rec.p = r.at(rec.t);
         vec3 outward_normal = (rec.p - center) / radius;
         rec.set_face_normal(r, outward_normal);
+        rec.mat = mat;
 
         return true;
     }
@@ -42,4 +46,5 @@ public:
 private:
     point3 center;
     double radius;
+    std::shared_ptr<material> mat;
 };
