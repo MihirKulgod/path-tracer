@@ -2,6 +2,7 @@
 
 #include "color.h"
 #include "hittable.h"
+#include "ray.h"
 
 class material {
 public:
