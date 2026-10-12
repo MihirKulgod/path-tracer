@@ -41,6 +41,11 @@ public:
 
     [[nodiscard]] double length_squared() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
 
+    [[nodiscard]] bool near_zero() const {
+        double s = 1e-8;
+        return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) && (std::fabs(e[2]) < s);
+    }
+
     static vec3 random() { return {random_double(), random_double(), random_double()}; }
 
     static vec3 random(double min, double max) {
