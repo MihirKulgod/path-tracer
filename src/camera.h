@@ -6,6 +6,7 @@
 #include "ray.h"
 #include "utilities.h"
 #include "vec3.h"
+#include <chrono>
 
 class camera {
 public:
@@ -25,12 +26,24 @@ public:
 
     void render(const hittable& world) {
         initialize();
+
+        using namespace std::chrono;
+        time_point prev_time = steady_clock::now();
+        time_point curr_time = steady_clock::now();
+
         // Header of PPM image format
         // P3 means colors are in ASCII, 255 is max colour, dimensions are provided too
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
         for (int j = 0; j < image_height; j++) {
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+            curr_time = steady_clock::now();
+            duration delta = duration_cast<milliseconds>(curr_time - prev_time);
+            prev_time = steady_clock::now();
+            duration est_remaining_time = duration_cast<seconds>((image_height - j) * delta);
+
+            std::clog << "\rScanlines remaining: " << (image_height - j) << '/' << image_height
+                      << '\n'
+                      << "Est. " << hh_mm_ss<seconds>(est_remaining_time) << " " << std::flush;
             for (int i = 0; i < image_width; i++) {
                 color pixel_color(0);
                 for (int sample = 0; sample < samples_per_pixel; sample++) {
