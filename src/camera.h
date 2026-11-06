@@ -27,7 +27,7 @@ public:
     color sky_start = color(1);
     color sky_end = color(0.3, 0.7, 1.0);
 
-    void render(const hittable& world) {
+    void render(const hittable& world, const hittable& lights) {
         initialize();
 
         using namespace std::chrono;
@@ -51,7 +51,7 @@ public:
                 color pixel_color(0);
                 for (int sample = 0; sample < samples_per_pixel; sample++) {
                     ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
+                    pixel_color += ray_color(r, max_depth, world, lights);
                 }
                 write_color(std::cout, pixel_color * pixel_samples_scale);
             }
@@ -122,7 +122,8 @@ private:
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
 
-    [[nodiscard]] color ray_color(const ray& r, int depth, const hittable& world) const {
+    [[nodiscard]] color ray_color(const ray& r, int depth, const hittable& world,
+                                  const hittable& lights) const {
         // On hitting bounce limit, return black
         if (depth <= 0)
             return {0};
@@ -133,8 +134,7 @@ private:
             color attenuation;
             if (!rec.mat->scatter(r, rec, attenuation, scattered))
                 return emission;
-            return emission + attenuation * ray_color(scattered, depth - 1, world);
-            return {0};
+            return emission + attenuation * ray_color(scattered, depth - 1, world, lights);
         }
 
         vec3 unit_direction = unit_vector(r.direction());
