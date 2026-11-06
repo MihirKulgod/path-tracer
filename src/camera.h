@@ -24,6 +24,9 @@ public:
     double defocus_angle = 0;
     double focus_dist = 10;
 
+    color sky_start = color(1);
+    color sky_end = color(0.3, 0.7, 1.0);
+
     void render(const hittable& world) {
         initialize();
 
@@ -125,15 +128,17 @@ private:
             return {0};
         hit_record rec;
         if (world.hit(r, interval(0.001, infinity), rec)) {
+            color emission = rec.mat->emitted();
             ray scattered;
             color attenuation;
-            if (rec.mat->scatter(r, rec, attenuation, scattered))
-                return attenuation * ray_color(scattered, depth - 1, world);
+            if (!rec.mat->scatter(r, rec, attenuation, scattered))
+                return emission;
+            return emission + attenuation * ray_color(scattered, depth - 1, world);
             return {0};
         }
 
         vec3 unit_direction = unit_vector(r.direction());
         double a = 0.5 * (unit_direction.y() + 1.0);
-        return (1 - a) * color(1) + a * color(0.3, 0.7, 1.0);
+        return (1 - a) * sky_start + a * sky_end;
     }
 };

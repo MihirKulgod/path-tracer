@@ -14,6 +14,8 @@ public:
                          [[maybe_unused]] ray& scattered) const {
         return false;
     }
+
+    [[nodiscard]] virtual color emitted() const { return {0}; }
 };
 
 class lambertian : public material {
@@ -90,4 +92,14 @@ private:
         r0 *= r0;
         return r0 + (1 - r0) * std::pow(1 - cosine, 5);
     }
+};
+
+class diffuse_light : public material {
+public:
+    diffuse_light(color emission_) : emission(emission_) {}
+
+    [[nodiscard]] color emitted() const override { return emission; }
+
+private:
+    color emission;
 };
