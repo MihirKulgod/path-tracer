@@ -101,7 +101,7 @@ inline vec3 random_in_unit_disc() {
     }
 }
 
-// Uses rejection method
+/* Uses rejection method. */
 inline vec3 random_unit_vector() {
     while (true) {
         vec3 p = vec3::random(-1, 1);
@@ -126,5 +126,24 @@ inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
     double cos_theta = std::fmin(dot(-uv, n), 1);
     vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
     vec3 r_out_parallel = -std::sqrt(std::fabs(1 - r_out_perp.length_squared())) * n;
+
     return r_out_perp + r_out_parallel;
+}
+
+vec3 random_to_sphere(double radius, double distance_squared) {
+    /* Cosine of the angle of the cone. */
+    double cos_max_angle = std::sqrt(1 - radius * radius / distance_squared);
+
+    double r1 = random_double();
+    double r2 = random_double();
+
+    /* Random angle to rotate around axis. */
+    double phi = 2 * pi * r1;
+
+    double z = 1 + r2 * (cos_max_angle - 1);
+
+    double x = std::cos(phi) * std::sqrt(1 - z * z);
+    double y = std::sin(phi) * std::sqrt(1 - z * z);
+
+    return {x, y, z};
 }
