@@ -124,7 +124,7 @@ private:
 
     [[nodiscard]] color ray_color(const ray& r, int depth, const hittable& world,
                                   const hittable& lights) const {
-        // On hitting bounce limit, return black
+        /* On hitting bounce limit, return black. */
         if (depth <= 0)
             return {0};
         hit_record rec;

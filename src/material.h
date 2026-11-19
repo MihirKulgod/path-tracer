@@ -3,6 +3,7 @@
 #include "color.h"
 #include "hittable.h"
 #include "ray.h"
+#include "utilities.h"
 #include "vec3.h"
 
 class material {
@@ -15,7 +16,24 @@ public:
         return false;
     }
 
+    /* For emissive materials. */
     [[nodiscard]] virtual color emitted() const { return {0}; }
+
+    /* How strongly the surface reflects light arriving from `direction` back toward the viewer,
+     * including the cosine falloff. Zero for directions below the surface. */
+    [[nodiscard]] virtual color reflectance([[maybe_unused]] const hit_record& rec,
+                                            [[maybe_unused]] const vec3& direction) const {
+        return {0};
+    }
+
+    /* Probability density that scatter() would have proposed `direction`. */
+    [[nodiscard]] virtual double pdf_value([[maybe_unused]] const hit_record& rec,
+                                           [[maybe_unused]] const vec3& direction) const {
+        return 0;
+    }
+
+    /* True for mirror-like materials, which skip the general reflectance/pdf path. */
+    [[nodiscard]] virtual bool is_specular() const { return false; }
 };
 
 class lambertian : public material {
@@ -24,16 +42,32 @@ public:
 
     bool scatter([[maybe_unused]] const ray& r_in, const hit_record& rec, color& attenuation,
                  ray& scattered) const override {
-        // This implementation always scatters rays
+        /* This implementation always scatters rays. */
         vec3 scatter_direction = rec.normal + random_unit_vector();
 
-        // Catch degenerate scatter direction
+        /* Catch degenerate scatter direction. */
         if (scatter_direction.near_zero())
             scatter_direction = rec.normal;
 
         scattered = ray(rec.p, scatter_direction);
         attenuation = albedo;
         return true;
+    }
+
+    [[nodiscard]] color reflectance(const hit_record& rec, const vec3& direction) const override {
+        double cos_theta = dot(direction, rec.normal) / direction.length();
+        if (cos_theta <= 0) {
+            return {0};
+        }
+        return albedo * cos_theta / pi;
+    }
+
+    [[nodiscard]] double pdf_value(const hit_record& rec, const vec3& direction) const override {
+        double cos_theta = dot(direction, rec.normal) / direction.length();
+        if (cos_theta <= 0) {
+            return 0;
+        }
+        return cos_theta / pi;
     }
 
 private:
@@ -52,6 +86,8 @@ public:
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
+
+    [[nodiscard]] bool is_specular() const override { return true; }
 
 private:
     color albedo;
@@ -83,11 +119,13 @@ public:
         return true;
     }
 
+    [[nodiscard]] bool is_specular() const override { return true; }
+
 private:
     double refraction_index;
 
     static double reflectance(double cosine, double refraction_index) {
-        // Schlick's approximation for reflectance
+        /* Schlick's approximation for reflectance. */
         double r0 = (1 - refraction_index) / (1 + refraction_index);
         r0 *= r0;
         return r0 + (1 - r0) * std::pow(1 - cosine, 5);
