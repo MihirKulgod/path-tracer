@@ -2,7 +2,9 @@
 
 #include "hittable.h"
 #include "interval.h"
+#include "utilities.h"
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -31,5 +33,22 @@ public:
         }
 
         return hit_anything;
+    }
+
+    [[nodiscard]] double pdf_value(const point3& origin, const vec3& direction) const override {
+        if (objects.size() == 0)
+            return hittable::pdf_value(origin, direction);
+
+        double total = 0;
+        for (const std::shared_ptr<hittable>& object : objects) {
+            total += object->pdf_value(origin, direction);
+        }
+        return total / static_cast<double>(objects.size());
+    }
+
+    [[nodiscard]] vec3 random(const point3& origin) const override {
+        auto index =
+            static_cast<std::size_t>(random_double() * static_cast<double>(objects.size()));
+        return objects[index]->random(origin);
     }
 };
