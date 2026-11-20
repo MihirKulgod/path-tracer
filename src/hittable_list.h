@@ -47,6 +47,9 @@ public:
     }
 
     [[nodiscard]] vec3 random(const point3& origin) const override {
+        if (objects.size() == 0)
+            return hittable::random(origin);
+
         auto index =
             static_cast<std::size_t>(random_double() * static_cast<double>(objects.size()));
         return objects[index]->random(origin);

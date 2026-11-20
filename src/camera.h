@@ -136,17 +136,25 @@ private:
             if (!rec.mat->scatter(r, rec, attenuation, scattered))
                 return emission;
             /* Materials that scatter. */
-            color result = ray_color(scattered, depth - 1, world, lights);
             if (rec.mat->is_specular()) {
-                return emission + attenuation * result;
+                return emission + attenuation * ray_color(scattered, depth - 1, world, lights);
             }
-            color reflectance = rec.mat->reflectance(rec, scattered.direction());
-            double pdf_value = rec.mat->pdf_value(rec, scattered.direction());
+            /* Non-specular materials. */
+            vec3 direction = (random_double() > 0.5) ? scattered.direction() : lights.random(rec.p);
+
+            color reflectance = rec.mat->reflectance(rec, direction);
+            if (reflectance.near_zero())
+                return emission;
+
+            double pdf_value =
+                (rec.mat->pdf_value(rec, direction) + lights.pdf_value(rec.p, direction)) / 2;
 
             if (pdf_value <= 0)
                 return emission;
 
-            return emission + reflectance * result / pdf_value;
+            return emission + reflectance *
+                                  ray_color(ray(rec.p, direction), depth - 1, world, lights) /
+                                  pdf_value;
         }
 
         vec3 unit_direction = unit_vector(r.direction());
